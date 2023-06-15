@@ -1,5 +1,5 @@
 import CGM
-import Environment
+import Environment_old
 import AHP
 
 def analysis():
@@ -44,7 +44,7 @@ def QCAdapt(context):
         CGM.moistU += 0.1
 
 def run():
-    CGM.W = WAdapt(Environment.context)
+    CGM.W = WAdapt(Environment_old.context)
     #QCAdapt()
 
 if __name__ == '__main__':

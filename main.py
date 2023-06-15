@@ -1,5 +1,5 @@
 import CGM
-import Environment
+import Environment_old
 import ConController
 import ReqController
 import matplotlib.pyplot as plt
@@ -7,7 +7,7 @@ import numpy as np
 
 
 
-context = Environment.context
+context = Environment_old.context
 def environmentUpdate(time):
     
     for i in range(len(context)):
@@ -59,11 +59,11 @@ def showStat():
     print("Softgoal Utility: " + str(utility))
 
     # collect data
-    userActdata.append(Environment.userAct.state)
-    tempdata.append(Environment.temperature.state)
-    moistdata.append(Environment.moisture.state)
-    lightdata.append(Environment.lighting.state)
-    networkdata.append(Environment.network.state)
+    userActdata.append(Environment_old.userAct.state)
+    tempdata.append(Environment_old.temperature.state)
+    moistdata.append(Environment_old.moisture.state)
+    lightdata.append(Environment_old.lighting.state)
+    networkdata.append(Environment_old.network.state)
     
 
     utilitydata.append(utility)
@@ -91,7 +91,7 @@ def runexp1():
         environmentUpdate(time)
         print("\nCurrent time: " + str(time))
         print("Context:")
-        Environment.showContext()
+        Environment_old.showContext()
         
         curUtility = -1 * ConController.utilityFun([CGM.CP.airCond, CGM.CP.humidifier, CGM.CP.autoAlarm, CGM.CP.light, CGM.CP.curtain, CGM.CP.fans])
         noadaptutilitydata.append(curUtility)
@@ -254,16 +254,16 @@ def runexp2():
     avgU2 = []
     for i in range(30):
         # old context
-        Environment.randomContext()
-        Environment.userAct.state = 1
+        Environment_old.randomContext()
+        Environment_old.userAct.state = 1
         #Environment.temperature.state = 20
         print("old context")
-        Environment.showContext()
+        Environment_old.showContext()
 
-        Environment.userAct.state = 0 
+        Environment_old.userAct.state = 0 
         #Environment.temperature.state = 10
         print("new context")
-        Environment.showContext()
+        Environment_old.showContext()
         # 
         CGM.W = [0.33,0.33,0.33]
 

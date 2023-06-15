@@ -1,4 +1,4 @@
-import Environment
+import Environment_old
 import numpy as np
 
 # Control Parameters
@@ -23,8 +23,36 @@ def setCP(cp):
     CP.fans = round(cp[5])
 
 
+class PerformanceIndicator:
+    def __init__(self):
+        self.PICost = 0
+        self.PILight = 0
+        self.PITemp = 0
+        self.PIMoist = 0
+
+    def setPICost(self, CP):
+        cost = cost + 30 * CP.airCond + 5 * CP.humidifier + 5 * CP.autoAlarm + 5 * CP.light + 5 * CP.fans
+        self.PICost = cost
+    
+    def setPITemp(self, CP, Env):
+        temp = self.PITemp
+        setTemp = 30
+        envTemp = Env.temp
+        self.PITemp = temp + 0.6 * CP.airCond * (setTemp - temp) - 0.5 * CP.fans + 0.05 * (envTemp - temp)
+
+    def setPIMoist(self, CP, Env):
+        moist = self.PIMoist
+        maxMoist = 1
+        envMoist = Env.moist
+        self.PIMoist = moist + 0.1 * CP.humidifier * (maxMoist - moist) + 0.03 * (envMoist - moist)
+
+    def setPILight(self, CP, Env):
+        light = self.PILight
+        envLight = Env.light
+        self.PILight = envLight + 1 * CP.light * (100 - envLight)
+
+
 # Performance Indicator
-#PICost = 0
 def calPICost(airCond_, humidifier_, autoAlarm_, light_, fans_):
     # airCond
     if(airCond_ < 16):
@@ -62,7 +90,6 @@ def calPICost(airCond_, humidifier_, autoAlarm_, light_, fans_):
         cost += 10
     return cost
 
-#PILight = 0
 def calPILight(light_, curtain_):
     if(light_ < 0.5):
         light = 0
@@ -73,8 +100,8 @@ def calPILight(light_, curtain_):
         curtain = 0
     else:
         curtain = 1
-    time = Environment.time.state
-    lighting = Environment.lighting.state
+    time = Environment_old.time.state
+    lighting = Environment_old.lighting.state
     if(light == 1):
         PILight = 100
     else: 
@@ -87,7 +114,7 @@ def calPILight(light_, curtain_):
             PILight = 20
     return PILight
 
-#PITemp = 0
+
 def calPITemp(airCond_, fan_):
     if(airCond_ < 16):
         airCond = 0
@@ -97,22 +124,22 @@ def calPITemp(airCond_, fan_):
         return airCond
     else:
         if(fan_ > 0.5):
-            return Environment.temperature.state - 2
+            return Environment_old.temperature.state - 2
         else:
-            return Environment.temperature.state
+            return Environment_old.temperature.state
 
 
 def calPIMoist(humidifier_):
     if(humidifier_ < 0.3):
-        return Environment.moisture.state
+        return Environment_old.moisture.state
     else:
         return humidifier_
     
 def calPINoise(window_):
     if(window_ < 0.5):
-        return max(0, Environment.noise.state - 30)
+        return max(0, Environment_old.noise.state - 30)
     else:
-        return Environment.noise.state
+        return Environment_old.noise.state
     
 
 # Softgoal Weights [Budget, Light, Comfort]
@@ -137,7 +164,7 @@ def SGBudgetQC(PICost_):
 lightThreshold = 100
 def SGLightQC(PILight_):
     #PILight = calPILight()
-    userAct = Environment.userAct.state
+    userAct = Environment_old.userAct.state
     if(userAct == 0 or userAct == 1):
         return PILight_ / lightThreshold
     else:
