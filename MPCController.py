@@ -4,6 +4,7 @@ import do_mpc
 from casadi import *
 
 from Environment import Environment
+from MPCAdaptor import MPCAdaptor
 
       
 model_type = 'discrete' # either 'discrete' or 'continuous'
@@ -124,17 +125,20 @@ mpc.set_initial_guess()
 
 u0 = np.array([0,0,0,0,0,0]).reshape(-1,1)
 
+mpcAdaptor = MPCAdaptor(Env)
 
 cpList = []
 piList = []
 
 timeLimit = 48
 t = 0
+
 for i in range(timeLimit):
     # update environment
 
     # whether adapt mpc setting or not
-
+    mpcAdaptor.adapt(t, mpc)
+    
     # mpc control 
     x_p = simulator.make_step(u0)
     piList.append(x_p)
