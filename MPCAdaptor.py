@@ -6,7 +6,7 @@ class MPCAdaptor:
         self.Env = Env
 
 
-    def WAdapt(userAct, temp):
+    def WAdapt(self, userAct, temp):
         CW = CGM.CW
         weightVectors = []
             
@@ -38,6 +38,7 @@ class MPCAdaptor:
         userAct = self.Env.userActList[t]
         temp = self.Env.tempList[t]
         conn = self.Env.connList[t]
+        
         weights = [0, 0, 0, 0]
         x_4_r = 100
         u_1_upper = 3

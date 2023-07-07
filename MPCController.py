@@ -8,6 +8,7 @@ from MPCAdaptor import MPCAdaptor
 
 import matplotlib.pyplot as plt
 import numpy as np
+
       
 Env = env
 
@@ -47,9 +48,8 @@ model.set_rhs('x_4_light', x_4_next)
 
 model.setup()
 
-
 # define mpc setting
-
+global mpc
 mpc = do_mpc.controller.MPC(model)
 setup_mpc = {
     'n_horizon': 3,
@@ -126,81 +126,6 @@ u0 = np.array([0,0,0,0,0,0]).reshape(-1,1)
 
 mpcAdaptor = MPCAdaptor(Env)
 
-cpList = []
-piList = []
-
-
-
-'''
-timeLimit = 48
-t = 0
-
-for i in range(timeLimit):
-    # update environment
-
-    # whether adapt mpc setting or not
-    # mpcAdaptor.adapt(t, mpc)
-    
-    # mpc control 
-    x_p = simulator.make_step(u0)
-    piList.append(x_p)
-    u0 = mpc.make_step(x_p)
-    cpList.append(u0)
-    # effect control to system
-    
-    t = t + 1
-
-for i in range(timeLimit):
-    print("=============================")
-    print("time: " + str(i))
-    print("Environment variable values:")
-    print("temperature:" + str(Env.tempList[i]))
-    print("moisture:" + str(Env.moistList[i]))
-    print("lightning:" + str(Env.lightList[i]))
-    print("\n")
-    
-    print("Performace Indicators:")
-    print("cost: " + str(piList[i][0]))
-    print("temp: " + str(piList[i][1]))
-    print("moist: " + str(float(piList[i][2])))
-    print("light: " + str(piList[i][3]))
-    print("\n")
-
-    print("Control Parameters:")
-    print("ac: "+ str(round(float(cpList[i][0]))))
-    print("fan: "+ str(round(float(cpList[i][1]))))
-    print("humi: "+ str(round(float(cpList[i][2]))))
-    print("curt: "+ str(round(float(cpList[i][3]))))
-    print("light: "+ str(round(float(cpList[i][4]))))
-    print("al: "+ str(round(float(cpList[i][5]))))
-    print("\n")
-
-x = np.arange(0,48)
-
-fig = plt.figure(num=1, figsize=(8, 8)) 
-ax1 = fig.add_subplot(4,1,1)
-ax2 = fig.add_subplot(4,1,2)
-ax3 = fig.add_subplot(4,1,3)
-ax5 = fig.add_subplot(4,1,4)
-
-y1 = np.array([row[5] for row in cpList])
-y2 = np.array(Env.userActList)
-ax1.plot(x, y1, label='auto alarm')
-ax1.plot(x, y2, label='user activity', color='red')
-ax1.set_yticks((0,1,2,3)) 
-ax1.legend(loc=(1.03,0.75)) 
-
-y3 = np.array(Env.tempList[:48])
-y4 = np.array([row[1] for row in piList])
-ax2.plot(x, y3, label='outside temp')
-ax2.plot(x, y4, label='temp')
-ax2.set_yticks((10,15,20,25,30,35))
-ax2.legend(loc=(1.03,0.75)) 
-
-plt.subplots_adjust(left=0.1, right=0.7, bottom=0.1, top=0.9)
-
-plt.show()
-'''
 
 def plan(x_hat):
     
@@ -208,14 +133,51 @@ def plan(x_hat):
     x_p = simulator.make_step(u0)
     return u0, x_p
 
-def mpcAdapt():
+def mpcAdapt(x_t, t):
     #if cnt change then
-    
-    weights, x_4_r, u_1_upper, u_6_lower = mpcAdaptor.adapt()
+
+    weights, x_4_r, u_1_upper, u_6_lower = mpcAdaptor.adapt(t)
+
+    # define mpc setting
+    global mpc
+    mpc = do_mpc.controller.MPC(model)
+    setup_mpc = {
+        'n_horizon': 3,
+        't_step': 1,
+        'n_robust': 1,
+        'store_full_solution': True,
+    }
+    mpc.set_param(**setup_mpc)
+
+    mterm = 0*x_1_cost
     lterm = weights[0] * (x_1_cost / 130)**2 + weights[1] * ((x_2_temp - 25) / 10)**2 + weights[2] * (x_3_moist - 0.6)**2 + weights[3] * (x_4_r - x_4_light / 100)**2
     mpc.set_objective(mterm=mterm, lterm=lterm)
+    mpc.set_rterm(
+        u_1_ac=1e-2,
+        u_2_fan=1e-2,
+        u_3_humi=1e-2
+    )
 
-    mpc.bounds['upper','_u', 'u_1_ac'] = u_1_upper
+    # define bounds
+    mpc.bounds['lower','_u', 'u_1_ac'] = 0
+    mpc.bounds['lower','_u', 'u_2_fan'] = 0
+    mpc.bounds['lower','_u', 'u_3_humi'] = 0
+    mpc.bounds['lower','_u', 'u_4_curt'] = 0
+    mpc.bounds['lower','_u', 'u_5_light'] = 0
     mpc.bounds['lower','_u', 'u_6_al'] = u_6_lower
 
+    mpc.bounds['upper','_u', 'u_1_ac'] = u_1_upper
+    mpc.bounds['upper','_u', 'u_2_fan'] = 3
+    mpc.bounds['upper','_u', 'u_3_humi'] = 3
+    mpc.bounds['upper','_u', 'u_4_curt'] = 1
+    mpc.bounds['upper','_u', 'u_5_light'] = 1
+    mpc.bounds['upper','_u', 'u_6_al'] = 1 
+
+    mpc.set_tvp_fun(tvp_fun)
+
     mpc.setup()
+
+    x0 = x_t.reshape(-1,1)
+    mpc.x0 = x0
+    mpc.set_initial_guess()
+

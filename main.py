@@ -15,15 +15,17 @@ def runexp1():
     
     for i in range(timeLimit):
     # update environment
-
+        env.update(t)
     # whether adapt mpc setting or not
-    # mpcAdaptor.adapt(t, mpc)
+        MPCController.mpcAdapt(x_p, t)
     
     # mpc control 
         u0, x_p = MPCController.plan(x_p)
         cpList.append(u0)
         piList.append(x_p)
     # effect control to system
+
+        t = t + 1
     
     
     x = np.arange(0,48)
