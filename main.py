@@ -4,6 +4,23 @@ import MPCController
 import numpy as np 
 import matplotlib.pyplot as plt
 
+utilitydata = []
+
+def collectStat():
+    CP = CGM.CP
+    PI = CGM.PI
+    PI.setPICost(CP)
+    PI.setPITemp(CP, env)
+    PI.setPIMoist(CP, env)
+    PI.setPILight(CP, env)
+
+    SGBudget = CGM.SGBudgetQC(PI.PICost)
+    SGLight = CGM.SGLightQC(PI.PILight)
+    SGComfort = CGM.SGComfortQC(PI.PITemp, PI.PIMoist)
+
+    utility = CGM.W[0] * SGBudget + CGM.W[1] * SGLight + CGM.W[2] * SGComfort
+
+    utilitydata.append(utility)
 
 def runexp1():
     timeLimit = 48
@@ -24,7 +41,6 @@ def runexp1():
         cpList.append(u0)
         piList.append(x_p)
     # effect control to system
-
         t = t + 1
     
     

@@ -52,96 +52,8 @@ class PerformanceIndicator:
         envLight = Env.light
         self.PILight = envLight + 1 * CP.light * (100 - envLight)
 
+PI = PerformanceIndicator()
 
-# Performance Indicator
-def calPICost(airCond_, humidifier_, autoAlarm_, light_, fans_):
-    # airCond
-    if(airCond_ < 16):
-        airCond = 0
-    else: 
-        airCond = airCond_
-    # humidifier
-    humidifier = humidifier_
-    # light
-    if(light_ < 0.5):
-        light = 0
-    else: 
-        light = 1
-    # autoalarm
-    if(autoAlarm_ < 0.5):
-        autoAlarm = 0
-    else: 
-        autoAlarm = 1
-    # fans
-    if(fans_ < 0.5):
-        fans = 0
-    else:
-        fans = 1
-    
-    cost = 0
-    if(airCond != 0):
-        cost += 50
-    if(humidifier >= 0.3):
-        cost += 5
-    if(autoAlarm != 0):
-        cost += 5
-    if(light != 0):
-        cost += 5
-    if(fans != 0):
-        cost += 10
-    return cost
-
-def calPILight(light_, curtain_):
-    if(light_ < 0.5):
-        light = 0
-    else: 
-        light = 1
-    
-    if(curtain_ < 0.5):
-        curtain = 0
-    else:
-        curtain = 1
-    time = Environment_old.time.state
-    lighting = Environment_old.lighting.state
-    if(light == 1):
-        PILight = 100
-    else: 
-        if(time > 6 and time < 18):
-            if(curtain == 0):
-                PILight = lighting
-            else:
-                PILight = lighting / 2
-        else:
-            PILight = 20
-    return PILight
-
-
-def calPITemp(airCond_, fan_):
-    if(airCond_ < 16):
-        airCond = 0
-    else: 
-        airCond = airCond_
-    if(airCond != 0):
-        return airCond
-    else:
-        if(fan_ > 0.5):
-            return Environment_old.temperature.state - 2
-        else:
-            return Environment_old.temperature.state
-
-
-def calPIMoist(humidifier_):
-    if(humidifier_ < 0.3):
-        return Environment_old.moisture.state
-    else:
-        return humidifier_
-    
-def calPINoise(window_):
-    if(window_ < 0.5):
-        return max(0, Environment_old.noise.state - 30)
-    else:
-        return Environment_old.noise.state
-    
 
 # Softgoal Weights [Budget, Light, Comfort]
 W = [0.33, 0.33, 0.33]
@@ -154,7 +66,7 @@ CW['climate_0'] = np.array([[1,0.33,0.14],[3,1,0.33],[7,3,1]])  # climate hot
 CW['climate_1'] = np.array([[1,0.33,0.33],[3,1,0.33],[3,3,1]])  # climate good
 
 
-# Quality Constraint
+# Quality Function
 budgetThreshold = 100
 def SGBudgetQC(PICost_):
     if(PICost_ > budgetThreshold):
