@@ -37,7 +37,7 @@ c_2_temp = model.set_variable('_tvp', 'c_2_temp')
 c_3_moist = model.set_variable('_tvp', 'c_3_moist')
 
 x_1_next = 20 * u_1_ac + 5 * u_2_fan + 5 * u_3_humi + 5 * u_5_light + 5 * u_6_al
-x_2_next = x_2_temp + 0.6 * u_1_ac * (26 - x_2_temp) - 0.2 * u_2_fan + 0.3 * (c_2_temp - x_2_temp)
+x_2_next = x_2_temp + 0.6 * u_1_ac * (25 - x_2_temp) - 0.2 * u_2_fan + 0.5 * (c_2_temp - x_2_temp)
 x_3_next = x_3_moist + 0.1 * u_3_humi * (1 - x_3_moist) + 0.03 * (c_3_moist - x_3_moist)
 x_4_next = u_5_light * (100 - c_1_light) + c_1_light
 
@@ -167,6 +167,49 @@ def mpcAdapt(x_t, t):
     mpc.bounds['lower','_u', 'u_6_al'] = u_6_lower
 
     mpc.bounds['upper','_u', 'u_1_ac'] = u_1_upper
+    mpc.bounds['upper','_u', 'u_2_fan'] = 3
+    mpc.bounds['upper','_u', 'u_3_humi'] = 3
+    mpc.bounds['upper','_u', 'u_4_curt'] = 1
+    mpc.bounds['upper','_u', 'u_5_light'] = 1
+    mpc.bounds['upper','_u', 'u_6_al'] = 1 
+
+    mpc.set_tvp_fun(tvp_fun)
+
+    mpc.setup()
+
+    x0 = x_t.reshape(-1,1)
+    mpc.x0 = x0
+    mpc.set_initial_guess()
+
+def mpcAdaptTest(x_t):
+    global mpc
+    mpc = do_mpc.controller.MPC(model)
+    setup_mpc = {
+        'n_horizon': 3,
+        't_step': 1,
+        'n_robust': 1,
+        'store_full_solution': True,
+    }
+    mpc.set_param(**setup_mpc)
+
+    mterm = 0*x_1_cost
+    lterm = weights[0] * (x_1_cost / 130) + weights[1] * ((x_2_temp - 25) / 10)**2 + weights[2] * (x_3_moist - 0.5)**2 + weights[3] * (0 - x_4_light / 100)**2
+    mpc.set_objective(mterm=mterm, lterm=lterm)
+    mpc.set_rterm(
+        u_1_ac=1e-2,
+        u_2_fan=1e-2,
+        u_3_humi=1e-2
+    )
+
+    # define bounds
+    mpc.bounds['lower','_u', 'u_1_ac'] = 0
+    mpc.bounds['lower','_u', 'u_2_fan'] = 0
+    mpc.bounds['lower','_u', 'u_3_humi'] = 0
+    mpc.bounds['lower','_u', 'u_4_curt'] = 0
+    mpc.bounds['lower','_u', 'u_5_light'] = 0
+    mpc.bounds['lower','_u', 'u_6_al'] = 0
+
+    mpc.bounds['upper','_u', 'u_1_ac'] = 3
     mpc.bounds['upper','_u', 'u_2_fan'] = 3
     mpc.bounds['upper','_u', 'u_3_humi'] = 3
     mpc.bounds['upper','_u', 'u_4_curt'] = 1

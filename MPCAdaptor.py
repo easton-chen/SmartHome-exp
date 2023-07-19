@@ -35,6 +35,7 @@ class MPCAdaptor:
         return weightVector
 
     def adapt(self, t):
+        flag = False
         userAct = self.Env.userActList[t]
         temp = self.Env.tempList[t]
         conn = self.Env.connList[t]

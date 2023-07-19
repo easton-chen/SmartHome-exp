@@ -115,6 +115,10 @@ class Environment:
             self.cnt[1] = 5
         else:
             self.cnt[1] = 6
+
+    def cntChange():
+        flag = False
+        return flag
         
 
 env = Environment()

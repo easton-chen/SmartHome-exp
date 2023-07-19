@@ -14,14 +14,13 @@ class ControlParam:
 
 CP = ControlParam()
 def setCP(cp):
-    CP.airCond = round(cp[0],3)
-    if(CP.airCond < 16):
-        CP.airCond = 0
-    CP.humidifier = round(cp[1],3)
-    CP.autoAlarm = round(cp[2])
-    CP.light = round(cp[3])
-    CP.curtain = round(cp[4])
-    CP.fans = round(cp[5])
+    CP.airCond = round(cp[0][0])
+    CP.fans = round(cp[1][0])
+    CP.humidifier = round(cp[2][0])
+    CP.curtain = round(cp[3][0])
+    CP.light = round(cp[4][0])
+    CP.autoAlarm = round(cp[5][0])
+    
 
 
 class PerformanceIndicator:
@@ -32,14 +31,14 @@ class PerformanceIndicator:
         self.PIMoist = 0
 
     def setPICost(self, CP):
-        cost = cost + 30 * CP.airCond + 5 * CP.humidifier + 5 * CP.autoAlarm + 5 * CP.light + 5 * CP.fans
+        cost = 20 * CP.airCond + 5 * CP.humidifier + 5 * CP.autoAlarm + 5 * CP.light + 5 * CP.fans
         self.PICost = cost
     
     def setPITemp(self, CP, Env):
         temp = self.PITemp
-        setTemp = 30
+        setTemp = 25
         envTemp = Env.temp
-        self.PITemp = temp + 0.6 * CP.airCond * (setTemp - temp) - 0.5 * CP.fans + 0.05 * (envTemp - temp)
+        self.PITemp = temp + 0.6 * CP.airCond * (setTemp - temp) - 0.2 * CP.fans + 0.5 * (envTemp - temp)
 
     def setPIMoist(self, CP, Env):
         moist = self.PIMoist
@@ -53,6 +52,11 @@ class PerformanceIndicator:
         self.PILight = envLight + 1 * CP.light * (100 - envLight)
 
 PI = PerformanceIndicator()
+def setPI(env):
+    PI.setPICost(CP)
+    PI.setPITemp(CP, env)
+    PI.setPIMoist(CP, env)
+    PI.setPILight(CP, env)
 
 
 # Softgoal Weights [Budget, Light, Comfort]
