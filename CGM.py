@@ -31,7 +31,7 @@ class PerformanceIndicator:
         self.PIMoist = 0
 
     def setPICost(self, CP):
-        cost = 20 * CP.airCond + 5 * CP.humidifier + 5 * CP.autoAlarm + 5 * CP.light + 5 * CP.fans
+        cost = 25 * CP.airCond + 5 * CP.humidifier + 5 * CP.autoAlarm + 2 * CP.light + 5 * CP.fans
         self.PICost = cost
     
     def setPITemp(self, CP, Env):
@@ -82,7 +82,7 @@ lightThreshold = 100
 def SGLightQC(PILight_):
     #PILight = calPILight()
     userAct = Environment_old.userAct.state
-    if(userAct == 0 or userAct == 1):
+    if(userAct == 1 or userAct == 2):
         return PILight_ / lightThreshold
     else:
         return 1 - PILight_ / lightThreshold
@@ -108,7 +108,7 @@ def SGComfortQC(PITemp_, PIMoist_):
     else:
         comfort2 = 1 - (PIMoist_ - moistU) / (1 - moistU)
 
-    return comfort1 * 0.7 + comfort2 * 0.3   
+    return comfort1 * 0.6 + comfort2 * 0.4   
 
 noiseThreshold = 45
 def SGNoiseQC(PINoise_):

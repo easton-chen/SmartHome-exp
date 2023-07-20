@@ -35,7 +35,8 @@ class MPCAdaptor:
         return weightVector
 
     def adapt(self, t):
-        flag = False
+        self.Env.show()
+
         userAct = self.Env.userActList[t]
         temp = self.Env.tempList[t]
         conn = self.Env.connList[t]
@@ -49,14 +50,27 @@ class MPCAdaptor:
         SGWeights = self.WAdapt(userAct, temp)
         weights = [SGWeights[0], SGWeights[2]/2, SGWeights[2]/2, SGWeights[1]]
         # reference value sleep->light
-        if(userAct == 2):
+        if(userAct == 3):
             x_4_r = 0
 
         # constraints conn->ac, useract->al
         if(conn == 0):
             u_1_upper = 0
-        if(userAct == 3):
+        if(userAct == 4):
             u_6_lower = 1
         
         
         return weights, x_4_r, u_1_upper, u_6_lower
+
+    # only change cgm, not mpc
+    def adapt2(self, t):
+        self.Env.show()
+
+        userAct = self.Env.userActList[t]
+        temp = self.Env.tempList[t]
+        conn = self.Env.connList[t]
+
+        SGWeights = self.WAdapt(userAct, temp)
+        for i in range(len(SGWeights)):
+            CGM.W[i] = SGWeights[i]
+
