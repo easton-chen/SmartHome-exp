@@ -62,7 +62,7 @@ mpc.set_param(**setup_mpc)
 # define objective function
 mterm = 0*x_1_cost
 
-weights = [0.1, 0.4, 0.2, 0.3]
+weights = [0.3, 0.2, 0.2, 0.3]
 lterm = weights[0] * (x_1_cost / 130)**2 + weights[1] * ((x_2_temp - 25) / 10)**2 + weights[2] * ((x_3_moist - 0.6)*3)**2 + weights[3] * (1 - x_4_light / 100)**2
 
 mpc.set_objective(mterm=mterm, lterm=lterm)
@@ -186,10 +186,10 @@ def mpcAdapt(x_t, t):
         mpc.x0 = x0
         mpc.set_initial_guess()
 
-def mpcAdapt(x_t, t):
+def mpcAdapt2(x_t, t):
     #if cnt change then
     if(env.cntChange() or t == 0):
-        mpcAdaptor.adapt2()
+        mpcAdaptor.adapt2(t)
 
 def mpcAdaptTest(x_t):
     global mpc

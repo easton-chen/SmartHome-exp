@@ -20,6 +20,8 @@ def collectStat():
     SGLight = CGM.SGLightQC(PI.PILight)
     SGComfort = CGM.SGComfortQC(PI.PITemp, PI.PIMoist)
 
+    print("SG quality:" + str(SGBudget) + "," + str(SGComfort) + "," + str(SGLight))
+
     utility = CGM.W[0] * SGBudget + CGM.W[1] * SGLight + CGM.W[2] * SGComfort
 
     utilitydata.append(utility)
@@ -37,7 +39,8 @@ def runexp1():
     CGM.PI.PIMoist = env.moistList[0]
     CGM.PI.PILight = env.lightList[0]
     
-    for i in range(timeLimit):
+    for t in range(timeLimit):
+        print("t:" + str(t))
         x_p = np.array([CGM.PI.PICost, CGM.PI.PITemp, CGM.PI.PIMoist, CGM.PI.PILight])
 
     # update environment
@@ -52,11 +55,13 @@ def runexp1():
         
     # effect control to system
         #print(u0)
-        CGM.setCP(u0)
+        u = [0,0,0,0,0,0]
+        for i in range(len(u0)):
+            u[i] = u0[i][0]
+        CGM.setCP(u)
         CGM.setPI(env)
         
         collectStat()
-        t = t + 1
     
 def plotResult():    
     x = np.arange(0,48)
@@ -123,6 +128,9 @@ def plotResult():
 
     plt.show()
 
+    avgU = np.mean(utility)
+    print("avgU:" + str(avgU))
+
 def runexp2():
     timeLimit = 48
     t = 0
@@ -133,6 +141,7 @@ def runexp2():
     CGM.PI.PILight = env.lightList[0]
     
     for t in range(timeLimit):
+        print("t:" + str(t))
         x_p = np.array([CGM.PI.PICost, CGM.PI.PITemp, CGM.PI.PIMoist, CGM.PI.PILight])
 
     # update environment
@@ -148,12 +157,58 @@ def runexp2():
         #print(u0)
         if(env.conn == 0):
             u0[0][0] = 0
-        CGM.setCP(u0)
+        u = [0,0,0,0,0,0]
+        for i in range(len(u0)):
+            u[i] = u0[i][0]
+        CGM.setCP(u)
         CGM.setPI(env)
         
         collectStat()
 
+def runexp_react():
+    timeLimit = 48
+    t = 0
+
+    CGM.PI.PICost = 0
+    CGM.PI.PITemp = env.tempList[0]
+    CGM.PI.PIMoist = env.moistList[0]
+    CGM.PI.PILight = env.lightList[0]
+
+    u = [0,0,0,0,0,0]
+    for t in range(timeLimit):
+        print("t:" + str(t))
+        env.update(t)
+        u[0] = CGM.CP.airCond
+        u[1] = CGM.CP.fans
+        u[2] = CGM.CP.humidifier
+        u[3] = CGM.CP.curtain
+        u[4] = CGM.CP.light
+        u[5] = CGM.CP.autoAlarm
+
+        if(CGM.PI.PITemp > 28):
+            if(u[0] < 3):
+                u[0] = u[0] + 1
+            elif(u[1] < 3):
+                u[1] = u[1] + 1
+        elif(CGM.PI.PITemp < 22):
+            u[0] = 0
+            u[1] = 0
+        
+        if(CGM.PI.PIMoist < 0.5):
+            if(u[2] < 3):
+                u[2] = u[2] + 1
+        elif(CGM.PI.PIMoist > 0.7):
+            u[2] = 0
+
+        if(CGM.PI.PILight < 75):
+            u[4] = 1
+        CGM.setCP(u)
+        CGM.setPI(env)
+
+        collectStat()
+
+
     
 if __name__ == '__main__':
-    runexp1()
-    plotResult()
+    runexp2()
+    plotResult()    

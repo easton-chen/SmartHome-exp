@@ -1,5 +1,4 @@
-import Environment_old
-import Environment
+from Environment import env
 import numpy as np
 
 # Control Parameters
@@ -14,12 +13,12 @@ class ControlParam:
 
 CP = ControlParam()
 def setCP(cp):
-    CP.airCond = round(cp[0][0])
-    CP.fans = round(cp[1][0])
-    CP.humidifier = round(cp[2][0])
-    CP.curtain = round(cp[3][0])
-    CP.light = round(cp[4][0])
-    CP.autoAlarm = round(cp[5][0])
+    CP.airCond = round(cp[0])
+    CP.fans = round(cp[1])
+    CP.humidifier = round(cp[2])
+    CP.curtain = round(cp[3])
+    CP.light = round(cp[4])
+    CP.autoAlarm = round(cp[5])
     
 
 
@@ -81,16 +80,16 @@ def SGBudgetQC(PICost_):
 lightThreshold = 100
 def SGLightQC(PILight_):
     #PILight = calPILight()
-    userAct = Environment_old.userAct.state
+    userAct = env.userAct
     if(userAct == 1 or userAct == 2):
         return PILight_ / lightThreshold
     else:
         return 1 - PILight_ / lightThreshold
 
-tempL = 20
+tempL = 24
 tempU = 26
 moistL = 0.4
-moistU = 0.7
+moistU = 0.6
 def SGComfortQC(PITemp_, PIMoist_):
     #PITemp = calPITemp()
 
