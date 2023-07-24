@@ -1,5 +1,6 @@
 import random
 import math
+import copy
 
 class Environment:
     def __init__(self):
@@ -130,6 +131,30 @@ class Environment:
             if(self.oldcnt[i] != self.cnt[i]):
                 flag = True
         return flag
+
+    def loadEnv(self, data):
+        self.userActList = data['userAct'][1:len(data['userAct'])-1].split(', ')
+        self.userActList = [int(a) for a in self.userActList]
+        self.tempList = data['temp'][1:len(data['temp'])-1].split(', ')
+        self.tempList = [float(a) for a in self.tempList]
+        self.moistList = data['moist'][1:len(data['moist'])-1].split(', ')
+        self.moistList = [float(a) for a in self.moistList]
+        self.lightList = data['light'][1:len(data['light'])-1].split(', ')
+        self.lightList = [int(a) for a in self.lightList]
+        self.connList = data['conn'][1:len(data['conn'])-1].split(', ')
+        self.connList = [int(a) for a in self.connList]
+
+        for i in range(3):
+            self.lightList.append(self.lightList[47])
+            self.tempList.append(self.tempList[47])
+            self.moistList.append(self.moistList[47])
+
+        self.userAct = self.userActList[0]
+        self.temp = self.tempList[0]
+        self.moist = self.moistList[0]
+        self.light = self.lightList[0]
+        self.conn = self.connList[0]
+        self.contextOp()
         
 
 env = Environment()

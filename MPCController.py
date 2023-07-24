@@ -11,6 +11,8 @@ import numpy as np
 
       
 Env = env
+global time 
+time = 0
 
 model_type = 'discrete' # either 'discrete' or 'continuous'
 model = do_mpc.model.Model(model_type)
@@ -90,12 +92,14 @@ mpc.bounds['upper','_u', 'u_6_al'] = 1
 
 tvp_prediction = mpc.get_tvp_template()
 def tvp_fun(t_now):
+    global time
+    tnow = time
     pvalue_list = []
-    pvalue_list.append([Env.lightList[int(t_now)],Env.tempList[int(t_now)],Env.moistList[int(t_now)]])
+    pvalue_list.append([Env.lightList[int(tnow)],Env.tempList[int(tnow)],Env.moistList[int(tnow)]])
     for t in range(3):
         #pvalue = predict(req_model, res_model, int(t_now + t + 1))
         #pvalue_list.append(pvalue)
-        pvalue_list.append([Env.lightList[int(t_now + t + 1)],Env.tempList[int(t_now + t + 1)],Env.moistList[int(t_now + t + 1)]])
+        pvalue_list.append([Env.lightList[int(tnow + t + 1)],Env.tempList[int(tnow + t + 1)],Env.moistList[int(tnow + t + 1)]])
     tvp_prediction['_tvp'] = pvalue_list
     return tvp_prediction
 
@@ -103,20 +107,6 @@ mpc.set_tvp_fun(tvp_fun)
 
 # mpc setup end
 mpc.setup()
-
-# simulator
-simulator = do_mpc.simulator.Simulator(model)
-simulator.set_param(t_step = 1)
-tvp_sim = simulator.get_tvp_template()
-
-def tvp_fun_sim(t_now):
-    tvp_sim['c_1_light'] = Env.lightList[int(t_now)]
-    tvp_sim['c_2_temp'] = Env.tempList[int(t_now)]
-    tvp_sim['c_3_moist'] = Env.moistList[int(t_now)]
-    return tvp_sim
-
-simulator.set_tvp_fun(tvp_fun_sim)
-simulator.setup()
 
 x0 = np.array([0, Env.tempList[0], Env.moistList[0], 0]).reshape(-1,1)
 mpc.x0 = x0
@@ -128,7 +118,8 @@ mpcAdaptor = MPCAdaptor(Env)
 
 
 def plan(x_hat):
-    
+    global time
+    time = (time + 1) % 48
     u0 = mpc.make_step(x_hat)
     for i in range(len(u0)):
         u0[i][0] = round(u0[i][0])

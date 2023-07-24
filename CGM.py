@@ -44,6 +44,8 @@ class PerformanceIndicator:
         maxMoist = 1
         envMoist = Env.moist
         self.PIMoist = moist + 0.1 * CP.humidifier * (maxMoist - moist) + 0.03 * (envMoist - moist)
+        self.PIMoist = min(maxMoist, self.PIMoist)
+        self.PIMoist = max(0, self.PIMoist)
 
     def setPILight(self, CP, Env):
         light = self.PILight
@@ -91,14 +93,13 @@ tempU = 26
 moistL = 0.4
 moistU = 0.6
 def SGComfortQC(PITemp_, PIMoist_):
-    #PITemp = calPITemp()
-
+   
     if(PITemp_ >= tempL and PITemp_ <= tempU):
         comfort1 = 1
     elif(PITemp_ < tempL):
-        comfort1 = PITemp_ / tempL
+        comfort1 = max(PITemp_ / tempL, 0)
     else:
-        comfort1 = 1 - (PITemp_ - tempU) / 10
+        comfort1 = max(1 - (PITemp_ - tempU) / 10, 0)
 
     if(PIMoist_ >= moistL and PIMoist_ <= moistU):
         comfort2 = 1

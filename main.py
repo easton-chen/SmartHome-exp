@@ -1,13 +1,23 @@
 import CGM
 from Environment import env
 import MPCController
+import BaseMPCController
 from MPCAdaptor import MPCAdaptor
 import numpy as np 
 import matplotlib.pyplot as plt
+import random
+import math
+import pandas as pd
+
+envdata = []
 
 utilitydata = []
 cpdata = []
 pidata = []
+
+avgUBase = []
+avgU1 = []
+avgU2 = []
 
 def collectStat():
     CP = CGM.CP
@@ -25,43 +35,49 @@ def collectStat():
     utility = CGM.W[0] * SGBudget + CGM.W[1] * SGLight + CGM.W[2] * SGComfort
 
     utilitydata.append(utility)
+    
 
-def runexp1():
-    timeLimit = 48
-    t = 0
-    #x_p = np.array([0, MPCController.Env.tempList[0], MPCController.Env.moistList[0], 0]).reshape(-1,1)
-    #print("init x:" + str(x_p))
-    
-    #cpList = []
-    #piList = []
-    CGM.PI.PICost = 0
-    CGM.PI.PITemp = env.tempList[0]
-    CGM.PI.PIMoist = env.moistList[0]
-    CGM.PI.PILight = env.lightList[0]
-    
-    for t in range(timeLimit):
-        print("t:" + str(t))
-        x_p = np.array([CGM.PI.PICost, CGM.PI.PITemp, CGM.PI.PIMoist, CGM.PI.PILight])
+def runexp2l():
+    casenum = 20
+    for i in range(casenum):
+        env.loadEnv(envdata[i])
+        timeLimit = 48
+        t = 0
+        #x_p = np.array([0, MPCController.Env.tempList[0], MPCController.Env.moistList[0], 0]).reshape(-1,1)
+        #print("init x:" + str(x_p))
+        
+        #cpList = []
+        #piList = []
+        CGM.PI.PICost = 0
+        CGM.PI.PITemp = env.tempList[0]
+        CGM.PI.PIMoist = env.moistList[0]
+        CGM.PI.PILight = env.lightList[0]
+        utilitydata.clear()
 
-    # update environment
-        env.update(t)
-    # whether adapt mpc setting or not
-        MPCController.mpcAdapt(x_p, t)
-        #if(t == 24):
-            #MPCController.mpcAdaptTest(x_p)
-    
-    # mpc control 
-        u0 = MPCController.plan(x_p)
+        for t in range(timeLimit):
+            print("t:" + str(t))
+            x_p = np.array([CGM.PI.PICost, CGM.PI.PITemp, CGM.PI.PIMoist, CGM.PI.PILight])
+
+        # update environment
+            env.update(t)
+        # whether adapt mpc setting or not
+            MPCController.mpcAdapt(x_p, t)
+            #if(t == 24):
+                #MPCController.mpcAdaptTest(x_p)
         
-    # effect control to system
-        #print(u0)
-        u = [0,0,0,0,0,0]
-        for i in range(len(u0)):
-            u[i] = u0[i][0]
-        CGM.setCP(u)
-        CGM.setPI(env)
-        
-        collectStat()
+        # mpc control 
+            u0 = MPCController.plan(x_p)
+            
+        # effect control to system
+            #print(u0)
+            u = [0,0,0,0,0,0]
+            for i in range(len(u0)):
+                u[i] = u0[i][0]
+            CGM.setCP(u)
+            CGM.setPI(env)
+            
+            collectStat()
+        avgU2.append(np.mean(utilitydata))
     
 def plotResult():    
     x = np.arange(0,48)
@@ -131,84 +147,256 @@ def plotResult():
     avgU = np.mean(utility)
     print("avgU:" + str(avgU))
 
-def runexp2():
-    timeLimit = 48
-    t = 0
+def runexp1l():
+    casenum = 20
+    for i in range(casenum):
+        env.loadEnv(envdata[i])
+        timeLimit = 48
+        t = 0
 
-    CGM.PI.PICost = 0
-    CGM.PI.PITemp = env.tempList[0]
-    CGM.PI.PIMoist = env.moistList[0]
-    CGM.PI.PILight = env.lightList[0]
-    
-    for t in range(timeLimit):
-        print("t:" + str(t))
-        x_p = np.array([CGM.PI.PICost, CGM.PI.PITemp, CGM.PI.PIMoist, CGM.PI.PILight])
+        CGM.PI.PICost = 0
+        CGM.PI.PITemp = env.tempList[0]
+        CGM.PI.PIMoist = env.moistList[0]
+        CGM.PI.PILight = env.lightList[0]
+        utilitydata.clear()
 
-    # update environment
-        env.update(t)
-    # no adapt mpc 
-        #MPCController.mpcAdapt(x_p, t)
-        MPCController.mpcAdapt2(x_p, t)
-    
-    # mpc control 
-        u0 = MPCController.plan(x_p)
+        for t in range(timeLimit):
+            print("t:" + str(t))
+            x_p = np.array([CGM.PI.PICost, CGM.PI.PITemp, CGM.PI.PIMoist, CGM.PI.PILight])
+
+        # update environment
+            env.update(t)
+        # no adapt mpc 
+            #MPCController.mpcAdapt(x_p, t)
+            MPCController.mpcAdapt2(x_p, t)
         
-    # effect control to system
-        #print(u0)
-        if(env.conn == 0):
-            u0[0][0] = 0
+        # mpc control 
+            u0 = MPCController.plan(x_p)
+            
+        # effect control to system
+            #print(u0)
+            if(env.conn == 0):
+                u0[0][0] = 0
+            u = [0,0,0,0,0,0]
+            for i in range(len(u0)):
+                u[i] = u0[i][0]
+            CGM.setCP(u)
+            CGM.setPI(env)
+            
+            collectStat()
+
+        avgU1.append(np.mean(utilitydata))
+
+def runexpBase():
+    casenum = 20
+    for i in range(casenum):
+        env.loadEnv(envdata[i])
+        timeLimit = 48
+        t = 0
+
+        CGM.PI.PICost = 0
+        CGM.PI.PITemp = env.tempList[0]
+        CGM.PI.PIMoist = env.moistList[0]
+        CGM.PI.PILight = env.lightList[0]
+
         u = [0,0,0,0,0,0]
-        for i in range(len(u0)):
-            u[i] = u0[i][0]
-        CGM.setCP(u)
-        CGM.setPI(env)
-        
-        collectStat()
+        utilitydata.clear()
+        for t in range(timeLimit):
+            print("t:" + str(t))
+            env.update(t)
 
-def runexp_react():
-    timeLimit = 48
-    t = 0
+            x_p = np.array([CGM.PI.PICost, CGM.PI.PITemp, CGM.PI.PIMoist, CGM.PI.PILight])
+            u0 = BaseMPCController.plan(x_p)
 
-    CGM.PI.PICost = 0
-    CGM.PI.PITemp = env.tempList[0]
-    CGM.PI.PIMoist = env.moistList[0]
-    CGM.PI.PILight = env.lightList[0]
+            u = [0,0,0,0,0,0]
+            for i in range(len(u0)):
+                u[i] = u0[i][0]
+            CGM.setCP(u)
+            CGM.setPI(env)
+            
+            collectStat()
 
-    u = [0,0,0,0,0,0]
-    for t in range(timeLimit):
-        print("t:" + str(t))
-        env.update(t)
-        u[0] = CGM.CP.airCond
-        u[1] = CGM.CP.fans
-        u[2] = CGM.CP.humidifier
-        u[3] = CGM.CP.curtain
-        u[4] = CGM.CP.light
-        u[5] = CGM.CP.autoAlarm
+        avgUBase.append(np.mean(utilitydata))
+            
 
-        if(CGM.PI.PITemp > 28):
-            if(u[0] < 3):
-                u[0] = u[0] + 1
-            elif(u[1] < 3):
-                u[1] = u[1] + 1
-        elif(CGM.PI.PITemp < 22):
-            u[0] = 0
-            u[1] = 0
-        
-        if(CGM.PI.PIMoist < 0.5):
-            if(u[2] < 3):
-                u[2] = u[2] + 1
-        elif(CGM.PI.PIMoist > 0.7):
-            u[2] = 0
+def runexpReact():
+    casenum = 20
+    for i in range(casenum):
+        env.loadEnv(envdata[i])
+        timeLimit = 48
+        t = 0
 
-        if(CGM.PI.PILight < 75):
-            u[4] = 1
-        CGM.setCP(u)
-        CGM.setPI(env)
+        CGM.PI.PICost = 0
+        CGM.PI.PITemp = env.tempList[0]
+        CGM.PI.PIMoist = env.moistList[0]
+        CGM.PI.PILight = env.lightList[0]
 
-        collectStat()
+        u = [0,0,0,0,0,0]
+        for t in range(timeLimit):
+            print("t:" + str(t))
+            env.update(t)
+            u[0] = CGM.CP.airCond
+            u[1] = CGM.CP.fans
+            u[2] = CGM.CP.humidifier
+            u[3] = CGM.CP.curtain
+            u[4] = CGM.CP.light
+            u[5] = CGM.CP.autoAlarm
 
+            if(CGM.PI.PITemp > 28):
+                if(u[0] < 3):
+                    u[0] = u[0] + 1
+                elif(u[1] < 3):
+                    u[1] = u[1] + 1
+            elif(CGM.PI.PITemp < 22):
+                u[0] = 0
+                u[1] = 0
+            
+            if(CGM.PI.PIMoist < 0.5):
+                if(u[2] < 3):
+                    u[2] = u[2] + 1
+            elif(CGM.PI.PIMoist > 0.7):
+                u[2] = 0
 
+            if(CGM.PI.PILight < 75):
+                u[4] = 1
+            CGM.setCP(u)
+            CGM.setPI(env)
+
+            collectStat()
+        #sum = 0
+        #for i in range(len(utilitydata)):
+        #    sum += utilitydata[i]
+        avgU1.append(np.mean(utilitydata))
+
+def generateEnv(exp):
+    casenum = 20
+    data = []
+    envfile = open('env.csv','w+')
+
+    if(exp == 1):
+        for i in range(casenum):
+            tempAvg = random.randint(10,35) + random.random()
+            tempBias = random.randint(5,10) + random.random()
+            moistAvg = random.randint(20,80) / 100
+            moistBias = random.randint(5,10) / 100
+
+            length = 48
+            userActList = []
+            tempList = []
+            moistList = []
+            lightList = []
+            connList = []
+            for i in range(length):
+                userActList.append(1)
+
+                tempList.append(tempBias * math.sin(((i / 2 - 8) / 12) * math.pi) + tempAvg)
+                
+                moistList.append(moistBias * math.sin(((i / 2 + 4) / 12) * math.pi) + moistAvg)
+                
+                if(i > 14 and i < 34):
+                    lightList.append(random.randint(60, 100))
+                elif((i >= 10 and i <= 14) or (i >= 34 and i <= 38)):
+                    lightList.append(random.randint(40, 80))
+                else:
+                    lightList.append(10)
+
+                connList.append(1)
+            data.append([userActList, tempList, moistList, lightList, connList])
+    if(exp == 2):
+        for i in range(casenum):
+            tempAvg = random.randint(10,35) + random.random()
+            tempBias = random.randint(5,10) + random.random()
+            moistAvg = random.randint(20,80) / 100
+            moistBias = random.randint(5,10) / 100
+
+            length = 48
+            userActList = []
+            tempList = []
+            moistList = []
+            lightList = []
+            connList = []
+            for i in range(length):
+                transMat = [
+                    [0.6, 0.3, 0, 0.1],
+                    [0.2, 0.8, 0, 0],
+                    [0, 0, 0, 0],
+                    [0.6, 0.1, 0, 0.3]
+                ]
+                if(i <= 14):
+                    state = 2
+                elif(i >= 24 and i <= 2):
+                    ran = random.random()
+                    if(ran > 0.5):
+                        state = 2
+                    else:
+                        state = 0
+                else:
+                    thres1 = transMat[state][0]
+                    thres2 = thres1 + transMat[state][1]
+                    if(state == 2):
+                        state = 0
+                    else:
+                        ran = random.random()
+                        if(ran <= thres1):
+                            state = 0
+                        elif(ran <= thres2):
+                            state = 1
+                        else:
+                            state = 3
+                userActList.append(state + 1)
+
+                tempList.append(tempBias * math.sin(((i / 2 - 8) / 12) * math.pi) + tempAvg)
+                
+                moistList.append(moistBias * math.sin(((i / 2 + 4) / 12) * math.pi) + moistAvg)
+                
+                if(i > 14 and i < 34):
+                    lightList.append(random.randint(60, 100))
+                elif((i >= 10 and i <= 14) or (i >= 34 and i <= 38)):
+                    lightList.append(random.randint(40, 80))
+                else:
+                    lightList.append(10)
+
+                ran = random.random()
+                if(ran > 0.99):
+                    connList.append(0)
+                else:
+                    connList.append(1)
+            data.append([userActList, tempList, moistList, lightList, connList])
+    df = pd.DataFrame(data, columns=['userAct','temp','moist','light','conn'])
+    df.to_csv(envfile)
+
+def loadEnvfile():
+    envfile = open('env.csv','r')
+    df = pd.read_csv(envfile)
+    for i in range(df.shape[0]):
+        envdata.append(df.iloc[i])
+    #useractlist = envdata[1]['userAct']
+    #useractlist = useractlist[1:len(useractlist)-1].split(', ')
+    #useractlist = [float(data) for data in useractlist]
+    #print(useractlist)
+
+def plotScatter():
+    #print("U:" + str(avgU1))
+    fig = plt.figure()          
+    ax =fig.add_subplot(1,1,1)   
+    x = np.arange(0,len(avgU1))
+    y1 = np.array(avgU1)
+    y2 = np.array(avgU2) 
+    print("U1:" + str(y1))
+    print("U2:" + str(y2))     
+    print("\navgU1: " + str(np.mean(y1)) + " avgU2: " + str(np.mean(y2)))
+    print("\nvarU1: " + str(np.std(y1)) + " varU2: " + str(np.std(y2)))
+    ax.scatter(x,y1,s=20,c='y',alpha=0.5,lw=2,facecolors='none',label='1-layer')  
+    ax.scatter(x,y2,s=20,c='r',alpha=0.5,lw=2,facecolors='none',label='2-layer')  
+    ax.set_xticks((0,5,10,15,20))
+    ax.legend()
+    plt.show()  
+    
     
 if __name__ == '__main__':
-    runexp2()
-    plotResult()    
+    generateEnv(2)    
+    loadEnvfile()
+    #runexpBase()
+    runexp1l()
+    runexp2l()
+    plotScatter()
