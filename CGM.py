@@ -50,7 +50,9 @@ class PerformanceIndicator:
     def setPILight(self, CP, Env):
         light = self.PILight
         envLight = Env.light
-        self.PILight = envLight + 1 * CP.light * (100 - envLight)
+        self.PILight = envLight + 1 * CP.light * (100 - envLight) - 20 * CP.curtain
+        self.PILight = min(100, self.PILight)
+        self.PILight = max(10, self.PILight)
 
 PI = PerformanceIndicator()
 def setPI(env):

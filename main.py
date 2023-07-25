@@ -14,6 +14,9 @@ envdata = []
 utilitydata = []
 cpdata = []
 pidata = []
+weightsdata0 = []
+weightsdata1 = []
+weightsdata2 = []
 
 avgUBase = []
 avgU1 = []
@@ -25,6 +28,11 @@ def collectStat():
 
     cpdata.append([CP.airCond, CP.fans, CP.humidifier, CP.curtain, CP.light, CP.autoAlarm])
     pidata.append([PI.PICost, PI.PITemp, PI.PIMoist, PI.PILight])
+
+    weightsdata0.append(CGM.W[0])
+    weightsdata1.append(CGM.W[1])
+    weightsdata2.append(CGM.W[2])
+    #print("weights:" + str(CGM.W))
 
     SGBudget = CGM.SGBudgetQC(PI.PICost)
     SGLight = CGM.SGLightQC(PI.PILight)
@@ -38,9 +46,9 @@ def collectStat():
     
 
 def runexp2l():
-    casenum = 20
+    casenum = 1
     for i in range(casenum):
-        env.loadEnv(envdata[i])
+        #env.loadEnv(envdata[i])
         timeLimit = 48
         t = 0
         #x_p = np.array([0, MPCController.Env.tempList[0], MPCController.Env.moistList[0], 0]).reshape(-1,1)
@@ -94,58 +102,156 @@ def plotResult():
     cpdata_ = cpdata[:48]
     utilitydata_ = utilitydata[:48]
 
-    cvMoist = np.array(env.moistList[:48])
-    piMoist = np.array([row[2] for row in pidata_])
-    cpHumi = np.array([row[2] for row in cpdata_])
-    ax1.plot(x, cvMoist, label='outside moist', linestyle=':')
-    ax1.plot(x, piMoist, label='moist', linestyle=':')
-    ax1.set_yticks((0,0.25,0.5,0.75,1)) 
-    ax1.legend(loc=(1.03,0.75)) 
-    ax1.spines['right'].set_visible(False)
-    ax1_ = ax1.twinx()
-    ax1_.plot(x, cpHumi, color='red', label='humi')
-    ax1_.set_yticks((0, 1, 2, 3))
-    ax1_.legend(loc=(1.04,0.25))
+    cvUser = np.array(env.userActList[:48]) 
+    #piMoist = np.array([row[2] for row in pidata_])
+    #cpHumi = np.array([row[2] for row in cpdata_])
+    ax1.plot(x, cvUser, label='user activity', linestyle=':')
+    #ax1.plot(x, piMoist, label='moist', linestyle=':')
+    ax1.set_yticks((1,2,3,4)) 
+    ax1.legend(loc=(1.04,0.75)) 
+
+    #ax1.spines['right'].set_visible(False)
+    #ax1_ = ax1.twinx()
+    #ax1_.plot(x, cpHumi, color='red', label='humi')
+    #ax1_.set_yticks((0, 1, 2, 3))
+    #ax1_.legend(loc=(1.04,0.25))
+
+    cpAl = np.array([row[5] for row in cpdata_])
+    ax2.plot(x, cpAl, label='auto alarm')
+    ax2.set_yticks((0,1))
+    #ax2.legend(loc='best')
+    ax2.legend(loc=(1.04,0.75)) 
 
     cvTemp = np.array(env.tempList[:48])
     piTemp = np.array([row[1] for row in pidata_])
     cpAc = np.array([row[0] for row in cpdata_])
     cpFan = np.array([row[1] for row in cpdata_])
-    ax2.plot(x, cvTemp, label='outside temp', linestyle=':')
-    ax2.plot(x, piTemp, label='temp', linestyle=':')
+    ax3.plot(x, cvTemp, label='outside temp', linestyle=':')
+    ax3.plot(x, piTemp, label='temp', linestyle=':')
+    ax3.set_yticks((10,15,20,25,30,35))
+    ax3.legend(loc=(1.04,0.6)) 
+    ax3.spines['right'].set_visible(False)
+    ax3_ = ax3.twinx()
+    ax3_.plot(x, cpAc, color='red', label='ac')
+    ax3_.plot(x, cpFan, label='fan')
+    ax3_.set_yticks((0, 1, 2, 3))
+    ax3_.legend(loc=(1.04,0.18))
+
+
+    w0 = np.array(weightsdata0)
+    w1 = np.array(weightsdata1)
+    w2 = np.array(weightsdata2)
+    ax4.plot(x, w0, label='budget weight', linestyle=':',marker='*')
+    ax4.plot(x, w1, label='lighting weight', linestyle=':',marker='*')
+    ax4.plot(x, w2, label='body comfort weight', linestyle=':',marker='*')
+    ax4.set_yticks((0,0.2,0.4,0.6,0.8))
+    #ax4.legend(loc='best')
+    ax4.legend(loc=(1.04,0.4)) 
+
+    cvLight = np.array(env.lightList[:48])
+    piLight = np.array([row[3] for row in pidata_])
+    ax5.plot(x, cvLight, label='outside light', linestyle=':')
+    ax5.plot(x, piLight, label='light', linestyle=':')
+    ax5.set_yticks((0,25,50,75,100))
+    ax5.legend(loc=(1.04,0.6)) 
+
+    #piCost = np.array([row[0] for row in pidata_])
+    #ax4.plot(x, piCost, label='cost', linestyle=':')
+    #ax4.set_yticks((0,25,50,75,100))
+    #ax4.legend(loc=(1.03,0.75)) 
+
+    #utility = np.array(utilitydata_)
+    #ax5.plot(x, utility, label='utility', linestyle=':')
+    #ax2.plot(x, y10, label='utility wo adaptation', linestyle=':')
+    #ax5.set_yticks((0,0.2,0.4,0.6,0.8,1))
+    #ax5.legend(loc=(1.03,0.75)) 
+
+    plt.subplots_adjust(left=0.1, right=0.7, bottom=0.1, top=0.9)
+    plt.show()
+
+    #avgU = np.mean(utility)
+    #print("avgU:" + str(avgU))
+
+def plotSubfig():
+    x = np.arange(0,48)
+
+    pidata_ = pidata[:48]
+    cpdata_ = cpdata[:48]
+    utilitydata_ = utilitydata[:48]
+
+    fig0 = plt.figure(num=1, figsize=(8, 3)) 
+    ax0 = fig0.add_subplot(1,1,1)
+    cvUser = np.array(env.userActList[:48])
+    ax0.plot(x, cvUser, label='user activity', linestyle=':')
+    ax0.legend(loc='best')
+    ax0.set_xlabel('time')
+    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
+    plt.show() 
+
+    fig1 = plt.figure(num=1, figsize=(8, 3)) 
+    ax1 = fig1.add_subplot(1,1,1)
+    cpAl = np.array([row[5] for row in cpdata_])
+    #ax1.plot(x, cvUser, label='user activity', color='black', linestyle=':')
+    ax1.plot(x, cpAl, label='auto alarm')
+    ax1.set_yticks((0,1)) 
+    #ax1.legend(loc=(1.04,0.6))
+    ax1.legend(loc='best')
+    ax1.set_xlabel('time')
+    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
+    plt.show() 
+
+    fig2 = plt.figure(num=1, figsize=(8, 3)) 
+    ax2 = fig2.add_subplot(1,1,1)
+    cvTemp = np.array(env.tempList[:48])
+    cvConn = np.array(env.connList[:48])
+    piTemp = np.array([row[1] for row in pidata_])
+    cpAc = np.array([row[0] for row in cpdata_])
+    cpFan = np.array([row[1] for row in cpdata_])
+    ax2.plot(x, cvTemp, label='outside temperature', linestyle=':')
+    ax2.plot(x, piTemp, label='temperature', linestyle='--')
     ax2.set_yticks((10,15,20,25,30,35))
-    ax2.legend(loc=(1.03,0.75)) 
+    ax2.legend(loc=(1.04,0.6)) 
     ax2.spines['right'].set_visible(False)
     ax2_ = ax2.twinx()
     ax2_.plot(x, cpAc, color='red', label='ac')
     ax2_.plot(x, cpFan, label='fan')
+    ax2_.plot(x, cvConn, label='connectivity', color='black', linestyle=':')
     ax2_.set_yticks((0, 1, 2, 3))
-    ax2_.legend(loc=(1.04,0.25))
+    ax2_.legend(loc=(1.04,0.18))
+    ax2.set_xlabel('time')
+    plt.subplots_adjust(left=0.1, right=0.8, bottom=0.1, top=0.9)
+    plt.show() 
 
+    fig3 = plt.figure(num=1, figsize=(8, 3)) 
+    ax3 = fig3.add_subplot(1,1,1)
+    w0 = np.array(weightsdata0)
+    w1 = np.array(weightsdata1)
+    w2 = np.array(weightsdata2)
+    #ax3.plot(x, cvUser, label='user activity', linestyle=':')
+    ax3.plot(x, w0, label='budget weight', linestyle=':',marker='*')
+    ax3.plot(x, w1, label='lighting weight', linestyle=':',marker='*')
+    ax3.plot(x, w2, label='body comfort weight', linestyle=':',marker='*')
+    ax3.set_yticks((0,0.2,0.4,0.6,0.8))
+    ax3.legend(loc='best')
+    ax3.set_xlabel('time')
+    #ax3.legend(loc=(1.04,0.4)) 
+    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
+    plt.show() 
+
+    fig4 = plt.figure(num=1, figsize=(8, 3)) 
+    ax4 = fig4.add_subplot(1,1,1)
     cvLight = np.array(env.lightList[:48])
     piLight = np.array([row[3] for row in pidata_])
-    ax3.plot(x, cvLight, label='outside Light', linestyle=':')
-    ax3.plot(x, piLight, label='light', linestyle=':')
-    ax3.set_yticks((0,25,50,75,100))
-    ax3.legend(loc=(1.03,0.75)) 
-
-    piCost = np.array([row[0] for row in pidata_])
-    ax4.plot(x, piCost, label='cost', linestyle=':')
+    ax4.plot(x, cvLight, label='outside light', linestyle=':')
+    ax4.plot(x, piLight, label='light', linestyle='--')
     ax4.set_yticks((0,25,50,75,100))
-    ax4.legend(loc=(1.03,0.75)) 
-
-    utility = np.array(utilitydata_)
-    ax5.plot(x, utility, label='utility', linestyle=':')
-    #ax2.plot(x, y10, label='utility wo adaptation', linestyle=':')
-    ax5.set_yticks((0,0.2,0.4,0.6,0.8,1))
-    ax5.legend(loc=(1.03,0.75)) 
-
-    plt.subplots_adjust(left=0.1, right=0.7, bottom=0.1, top=0.9)
-
+    #ax4.legend(loc=(1.04,0.6)) 
+    ax4.legend(loc='best')
+    ax4.set_xlabel('time')
+    plt.subplots_adjust(left=0.1, right=0.9, bottom=0.1, top=0.9)
     plt.show()
 
-    avgU = np.mean(utility)
-    print("avgU:" + str(avgU))
+
 
 def runexp1l():
     casenum = 20
@@ -394,9 +500,10 @@ def plotScatter():
     
     
 if __name__ == '__main__':
-    generateEnv(2)    
-    loadEnvfile()
+    #generateEnv(2)    
+    #loadEnvfile()
     #runexpBase()
-    runexp1l()
+    #runexp1l()
     runexp2l()
-    plotScatter()
+    #plotSubfig()
+    #plotScatter()

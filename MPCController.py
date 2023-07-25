@@ -8,11 +8,12 @@ from MPCAdaptor import MPCAdaptor
 
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
       
 Env = env
-global time 
-time = 0
+global curtime 
+curtime = 0
 
 model_type = 'discrete' # either 'discrete' or 'continuous'
 model = do_mpc.model.Model(model_type)
@@ -41,7 +42,7 @@ c_3_moist = model.set_variable('_tvp', 'c_3_moist')
 x_1_next = 25 * u_1_ac + 5 * u_2_fan + 5 * u_3_humi + 2 * u_5_light + 5 * u_6_al
 x_2_next = x_2_temp + 0.6 * u_1_ac * (25 - x_2_temp) - 0.2 * u_2_fan + 0.5 * (c_2_temp - x_2_temp)
 x_3_next = x_3_moist + 0.1 * u_3_humi * (1 - x_3_moist) + 0.03 * (c_3_moist - x_3_moist)
-x_4_next = u_5_light * (100 - c_1_light) + c_1_light
+x_4_next = u_5_light * (100 - c_1_light) + c_1_light - 20 * u_4_curt
 
 model.set_rhs('x_1_cost', x_1_next)
 model.set_rhs('x_2_temp', x_2_next)
@@ -92,8 +93,8 @@ mpc.bounds['upper','_u', 'u_6_al'] = 1
 
 tvp_prediction = mpc.get_tvp_template()
 def tvp_fun(t_now):
-    global time
-    tnow = time
+    global curtime
+    tnow = curtime
     pvalue_list = []
     pvalue_list.append([Env.lightList[int(tnow)],Env.tempList[int(tnow)],Env.moistList[int(tnow)]])
     for t in range(3):
@@ -118,19 +119,23 @@ mpcAdaptor = MPCAdaptor(Env)
 
 
 def plan(x_hat):
-    global time
-    time = (time + 1) % 48
+    startTime = time.time()
+    global curtime
+    curtime = (curtime + 1) % 48
     u0 = mpc.make_step(x_hat)
     for i in range(len(u0)):
         u0[i][0] = round(u0[i][0])
     print("u:" + str(u0))
     #x_p = simulator.make_step(u0)
     #print("x:" + str(x_p))
+    endTime = time.time()
+    print("plan cost time:" + str(endTime - startTime))
     return u0
 
 def mpcAdapt(x_t, t):
     #if cnt change then
     if(env.cntChange() or t == 0):
+        startTime = time.time()
         print("time:" + str(t))
         weights, x_4_r, u_1_upper, u_6_lower = mpcAdaptor.adapt(t)
 
@@ -149,9 +154,9 @@ def mpcAdapt(x_t, t):
         lterm = weights[0] * (x_1_cost / 130)**2 + weights[1] * ((x_2_temp - 25) / 10)**2 + weights[2] * ((x_3_moist - 0.6) * 3)**2 + weights[3] * (x_4_r - x_4_light / 100)**2
         mpc.set_objective(mterm=mterm, lterm=lterm)
         mpc.set_rterm(
-            u_1_ac=1e-4,
-            u_2_fan=1e-4,
-            u_3_humi=1e-4
+            u_1_ac=1e-2,
+            u_2_fan=1e-2,
+            u_3_humi=1e-2
         )
 
         # define bounds
@@ -176,6 +181,8 @@ def mpcAdapt(x_t, t):
         x0 = x_t.reshape(-1,1)
         mpc.x0 = x0
         mpc.set_initial_guess()
+        endTime = time.time()
+        print("reconfig cost time:" + str(endTime - startTime))
 
 def mpcAdapt2(x_t, t):
     #if cnt change then

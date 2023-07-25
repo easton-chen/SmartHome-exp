@@ -16,7 +16,7 @@ class UserAct:
     def update(self,t):
         if(t <= 7):
             self.state = 2
-        elif(t >= 12 and t <= 1):
+        elif(t >= 12 and t <= 13):
             ran = random.random()
             if(ran > 0.5):
                 self.state = 2

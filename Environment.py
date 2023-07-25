@@ -83,8 +83,13 @@ class Environment:
             for i in range(length):
                 if(i < 15):
                     self.userActList.append(3)
+                elif(i >= 24 and i <= 28):
+                    self.userActList.append(4)
+                elif(i >= 36 and i <= 44):
+                    self.userActList.append(1)
                 else:
                     self.userActList.append(2)
+                
 
                 self.tempList.append(tempBias * math.sin(((i / 2 - 8) / 12) * math.pi) + tempAvg)
                 self.moistList.append(moistBias * math.sin(((i / 2 + 4) / 12) * math.pi) + moistAvg)
@@ -95,8 +100,8 @@ class Environment:
                 else:
                     self.lightList.append(10)
 
-                ran = random.random()
-                if(ran > 0.99):
+                #ran = random.random()
+                if(i == 30 or i == 31):
                     self.connList.append(0)
                 else:
                     self.connList.append(1)

@@ -48,6 +48,8 @@ class MPCAdaptor:
 
         # weights WAdapt(userAct, temps)
         SGWeights = self.WAdapt(userAct, temp)
+        for i in range(len(SGWeights)):
+            CGM.W[i] = SGWeights[i]
         weights = [SGWeights[0], SGWeights[1], SGWeights[2]/2, SGWeights[2]/2]
         # reference value sleep->light
         if(userAct == 3):
