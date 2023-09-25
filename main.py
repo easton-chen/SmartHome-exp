@@ -22,6 +22,8 @@ avgUBase = []
 avgU1 = []
 avgU2 = []
 
+casenum = 50
+
 def collectStat():
     CP = CGM.CP
     PI = CGM.PI
@@ -45,10 +47,14 @@ def collectStat():
     utilitydata.append(utility)
     
 
-def runexp2l():
-    casenum = 1
-    for i in range(casenum):
-        #env.loadEnv(envdata[i])
+def runexp2l(case):
+    if(case == 1):
+        num = 20
+    if(case == 2):
+        num = 1
+    for i in range(num):
+        if(case == 1):
+            env.loadEnv(envdata[i])
         timeLimit = 48
         t = 0
         #x_p = np.array([0, MPCController.Env.tempList[0], MPCController.Env.moistList[0], 0]).reshape(-1,1)
@@ -70,8 +76,6 @@ def runexp2l():
             env.update(t)
         # whether adapt mpc setting or not
             MPCController.mpcAdapt(x_p, t)
-            #if(t == 24):
-                #MPCController.mpcAdaptTest(x_p)
         
         # mpc control 
             u0 = MPCController.plan(x_p)
@@ -86,6 +90,8 @@ def runexp2l():
             
             collectStat()
         avgU2.append(np.mean(utilitydata))
+        print("avg plan time:" + str(np.mean(MPCController.planTime)))
+        print("avg reconfig time:" + str(np.mean(MPCController.reconfigTime)))
     
 def plotResult():    
     x = np.arange(0,48)
@@ -254,8 +260,9 @@ def plotSubfig():
 
 
 def runexp1l():
-    casenum = 20
+    #casenum = 20
     for i in range(casenum):
+        print('case:' + str(i))
         env.loadEnv(envdata[i])
         timeLimit = 48
         t = 0
@@ -294,7 +301,7 @@ def runexp1l():
         avgU1.append(np.mean(utilitydata))
 
 def runexpBase():
-    casenum = 20
+    #casenum = 20
     for i in range(casenum):
         env.loadEnv(envdata[i])
         timeLimit = 48
@@ -326,7 +333,7 @@ def runexpBase():
             
 
 def runexpReact():
-    casenum = 20
+    #casenum = 20
     for i in range(casenum):
         env.loadEnv(envdata[i])
         timeLimit = 48
@@ -375,7 +382,7 @@ def runexpReact():
         avgU1.append(np.mean(utilitydata))
 
 def generateEnv(exp):
-    casenum = 20
+    #casenum = 20
     data = []
     envfile = open('env.csv','w+')
 
@@ -481,13 +488,17 @@ def loadEnvfile():
     #useractlist = [float(data) for data in useractlist]
     #print(useractlist)
 
-def plotScatter():
+def plotScatter(RQ):
     #print("U:" + str(avgU1))
     fig = plt.figure()          
     ax =fig.add_subplot(1,1,1)   
     x = np.arange(0,len(avgU1))
-    y1 = np.array(avgU1)
-    y2 = np.array(avgU2) 
+    if(RQ == 1):
+        y1 = np.array(avgUBase)
+        y2 = np.array(avgU1) 
+    if(RQ == 2):
+        y1 = np.array(avgU1)
+        y2 = np.array(avgU2)
     print("U1:" + str(y1))
     print("U2:" + str(y2))     
     print("\navgU1: " + str(np.mean(y1)) + " avgU2: " + str(np.mean(y2)))
@@ -497,13 +508,53 @@ def plotScatter():
     ax.set_xticks((0,5,10,15,20))
     ax.legend()
     plt.show()  
+
+def plotBox(RQ):
+    fig,axes = plt.subplots()
+    if(RQ == 1):
+        y1 = np.array(avgUBase)
+        y2 = np.array(avgU1) 
+        labels = ['Base MPC','Context-aware MPC']
+        filename = './res/res-rq1.csv'
+        resfile = open(filename,'w+')
+        df = pd.DataFrame([avgUBase,avgU1])
+        df.to_csv(resfile)
+    if(RQ == 2):
+        y1 = np.array(avgU1)
+        y2 = np.array(avgU2)
+        labels = ['1-layer','2-layer']
+        filename = './res/res-rq2.csv'
+        resfile = open(filename,'w+')
+        df = pd.DataFrame([avgU1,avgU2])
+        df.to_csv(resfile)
+
+    print("\navgU1: " + str(np.mean(y1)) + " avgU2: " + str(np.mean(y2)))
+    print("\nvarU1: " + str(np.std(y1)) + " varU2: " + str(np.std(y2)))
+    ylabel = 'Satisfaction Level'
+
+    axes.boxplot([y1, y2],labels=labels,showmeans=True)
+    #axes.axhline(np.mean(y1), color='orange', ls='--', lw=2)
+    axes.set_yticks((0,0.2,0.4,0.6,0.8,1))
+    axes.set_ylabel(ylabel)
+    plt.show()
+
+    
     
     
 if __name__ == '__main__':
-    #generateEnv(2)    
-    #loadEnvfile()
-    #runexpBase()
-    #runexp1l()
-    runexp2l()
-    #plotSubfig()
-    #plotScatter()
+    RQ = 1
+    if(RQ == 1):
+        generateEnv(1)    
+        loadEnvfile()
+        runexpBase()
+        runexp1l()
+        #plotScatter(1)
+        plotBox(1)
+    if(RQ == 2):
+        generateEnv(2) 
+        loadEnvfile()
+        runexp1l()
+        runexp2l(1)
+        #plotScatter(2)
+        plotBox(2)
+        #plotSubfig()

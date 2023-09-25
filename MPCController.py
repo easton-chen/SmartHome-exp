@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
+planTime = []
+reconfigTime = []
       
 Env = env
 global curtime 
@@ -129,7 +131,8 @@ def plan(x_hat):
     #x_p = simulator.make_step(u0)
     #print("x:" + str(x_p))
     endTime = time.time()
-    print("plan cost time:" + str(endTime - startTime))
+    planTime.append(endTime - startTime)
+    #print("plan cost time:" + str(endTime - startTime))
     return u0
 
 def mpcAdapt(x_t, t):
@@ -182,7 +185,9 @@ def mpcAdapt(x_t, t):
         mpc.x0 = x0
         mpc.set_initial_guess()
         endTime = time.time()
-        print("reconfig cost time:" + str(endTime - startTime))
+        reconfigTime.append(endTime - startTime)
+        #endTime = time.time()
+        #print("reconfig cost time:" + str(endTime - startTime))
 
 def mpcAdapt2(x_t, t):
     #if cnt change then
